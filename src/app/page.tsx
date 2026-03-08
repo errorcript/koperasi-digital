@@ -127,7 +127,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#f8fafc] text-slate-900">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 glass border-b border-slate-200 px-6 py-4">
+      <nav className="hidden lg:block fixed top-0 w-full z-50 glass border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Logo size={18} />
@@ -149,11 +149,12 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+      <section className="lg:pt-32 lg:pb-20 lg:px-6 h-screen lg:h-auto overflow-hidden lg:overflow-visible">
+        <div className="max-w-7xl mx-auto flex flex-col lg:grid lg:grid-cols-2 lg:gap-16 items-center h-full lg:h-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            className="hidden lg:block"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100 mb-6 uppercase tracking-wider">
               <Zap size={14} /> Ecosystem v1.0 Ready
@@ -182,9 +183,9 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             id="mockup"
-            className="relative"
+            className="relative lg:h-auto h-full w-full"
           >
-            <div className="w-full max-w-[340px] mx-auto bg-white rounded-[40px] border-[10px] border-slate-900 h-[700px] shadow-2xl overflow-hidden relative">
+            <div className="w-full lg:max-w-[340px] mx-auto bg-white lg:rounded-[40px] rounded-none lg:border-[10px] border-none border-slate-900 lg:h-[700px] h-full lg:shadow-2xl shadow-none overflow-hidden relative">
               {/* App Header */}
               <div className="bg-slate-900 p-6 pt-12 text-white pb-10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -535,7 +536,7 @@ export default function Home() {
       </section>
 
       {/* Breakdown Biaya Section */}
-      <section id="biaya" className="py-24 bg-slate-900 text-white">
+      <section id="biaya" className="hidden lg:block py-24 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-black mb-4 tracking-tight">Transparansi Biaya <span className="text-emerald-400">Pengerjaan</span></h2>
@@ -626,7 +627,7 @@ export default function Home() {
       </section>
 
       {/* Key Logic (Solving Complexity) */}
-      <section className="py-24 max-w-7xl mx-auto px-6" id="solusi">
+      <section className="hidden lg:block py-24 max-w-7xl mx-auto px-6" id="solusi">
         <div className="grid md:grid-cols-3 gap-8">
           <div className="p-8 bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/50">
             <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
@@ -660,7 +661,7 @@ export default function Home() {
 
 
       {/* Roadmap Section */}
-      <section className="py-24 max-w-7xl mx-auto px-6" id="roadmap">
+      <section className="hidden lg:block py-24 max-w-7xl mx-auto px-6" id="roadmap">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-black mb-4">Timeline & <span className="text-emerald-600">Roadmap</span></h2>
           <p className="text-slate-500">Tahapan pengerjaan aplikasi sampai go-live.</p>
@@ -689,7 +690,7 @@ export default function Home() {
       </section>
 
       {/* Mobile App Focus Section */}
-      <section className="py-24 bg-white relative overflow-hidden" id="get-app">
+      <section className="hidden lg:block py-24 bg-white relative overflow-hidden" id="get-app">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="bg-slate-900 rounded-[64px] p-12 md:p-24 text-white flex flex-col md:flex-row items-center justify-between gap-16 shadow-[0_50px_100px_-20px_rgba(15,23,42,0.5)] border border-white/10">
             <div className="flex-1 text-center md:text-left">
@@ -744,7 +745,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="py-20 bg-slate-50 border-t border-slate-200 text-center">
+      <footer className="hidden lg:block py-20 bg-slate-50 border-t border-slate-200 text-center">
         <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-4">Gaskan Proyek Ini Sekarang</p>
         <h2 className="text-3xl font-black mb-8 px-6">Siap Bangun Ekosistem Koperasi Masa Depan?</h2>
         <div className="flex flex-col items-center gap-6">

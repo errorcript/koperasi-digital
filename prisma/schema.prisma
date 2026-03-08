@@ -31,6 +31,7 @@ model Partner {
   phone        String
   feePerTx     Float         @default(1000)
   status       String        @default("PENDING")
+  balance      Float         @default(0)
   products     Product[]
   transactions Transaction[]
   sessions     Session[]

@@ -61,10 +61,10 @@ export default function MitraRegister() {
     }
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6">
-            <div className="max-w-xl w-full">
+        <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center lg:p-6 p-0">
+            <div className="max-w-xl w-full min-h-screen lg:min-h-[auto] bg-white lg:bg-transparent flex flex-col justify-center">
                 {/* Logo & Header */}
-                <div className="flex flex-col items-center mb-12">
+                <div className="flex flex-col items-center mb-12 lg:pt-0 pt-10">
                     <Logo size={24} className="mb-4" />
                     <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Onboarding Mitra</h2>
                     <p className="text-slate-400 text-sm font-black uppercase tracking-widest mt-1">Ekosistem Koperawung</p>
@@ -85,7 +85,7 @@ export default function MitraRegister() {
                     key={step}
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    className="bg-white rounded-[40px] p-10 shadow-2xl shadow-slate-200/50 border border-slate-100"
+                    className="bg-white lg:rounded-[40px] rounded-none p-6 lg:p-10 lg:shadow-2xl shadow-none lg:shadow-slate-200/50 lg:border border-none border-slate-100 flex-1 lg:flex-none flex flex-col justify-start"
                 >
                     <AnimatePresence mode="wait">
                         {step === 1 && (

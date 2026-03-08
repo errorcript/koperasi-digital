@@ -14,6 +14,17 @@ KOPWARUNG is a cutting-edge **Next.js 15** ecosystem designed to bridge the gap 
 
 ---
 
+## 🚀 Interactive Demo Credentials
+Use these credentials to test the various roles within the ecosystem:
+
+| Role | Username / Email | Password | Target Dashboard |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `admin123` | `/dashboard` |
+| **Member** | `M001` | `password123` | `/` (Mockup App) |
+| **Partner** | `warung.eko@example.com` | `password123` | `/mitra` |
+
+---
+
 ## 🛠 Tech Stack (Enterprise Grade)
 Built with the latest technologies to ensure performance, security, and scalability:
 - **Core**: Next.js 15 (App Router), TypeScript.

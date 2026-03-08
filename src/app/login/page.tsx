@@ -41,7 +41,7 @@ export default function LoginPage() {
     };
 
     return (
-        <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans relative overflow-hidden">
+        <main className="min-h-screen bg-slate-50 flex items-center justify-center p-0 md:p-6 font-sans relative overflow-hidden">
             {/* Background Blob */}
             <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-emerald-100 rounded-full blur-[150px] opacity-60"></div>
             <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-100 rounded-full blur-[150px] opacity-60"></div>
@@ -49,7 +49,7 @@ export default function LoginPage() {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="w-full max-w-[480px] bg-white rounded-[48px] shadow-2xl shadow-slate-200/50 p-10 md:p-14 border border-slate-100 relative z-10"
+                className="w-full md:max-w-[480px] bg-white md:rounded-[48px] rounded-none md:shadow-2xl shadow-none md:shadow-slate-200/50 p-8 md:p-14 md:border border-transparent border-slate-100 relative z-10 min-h-screen md:min-h-[auto] flex flex-col justify-center"
             >
                 <div className="flex flex-col items-center mb-12">
                     <Logo size={32} className="mb-6 h-[50px] w-[50px]" />
@@ -67,8 +67,8 @@ export default function LoginPage() {
                             key={item.id}
                             onClick={() => setRole(item.id as any)}
                             className={`flex-1 flex flex-col items-center gap-2 py-4 rounded-[20px] transition-all ${role === item.id
-                                    ? 'bg-white shadow-xl text-slate-900'
-                                    : 'text-slate-400 hover:text-slate-600'
+                                ? 'bg-white shadow-xl text-slate-900'
+                                : 'text-slate-400 hover:text-slate-600'
                                 }`}
                         >
                             <item.icon size={18} />

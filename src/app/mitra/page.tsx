@@ -24,23 +24,29 @@ export default function MitraApp() {
     const [withdrawSuccess, setWithdrawSuccess] = useState(false);
     const [activeTab, setActiveTab] = useState<'home' | 'catalog' | 'wallet'>('home');
     const [transactions, setTransactions] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
     const [partner, setPartner] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [showAddProduct, setShowAddProduct] = useState(false);
+    const [newProduct, setNewProduct] = useState({ name: '', price: '0', stock: '50' });
 
     const fetchData = async () => {
         try {
-            const [resMe, resTx] = await Promise.all([
+            const [resMe, resTx, resP] = await Promise.all([
                 fetch('/api/auth/me'),
-                fetch('/api/transactions')
+                fetch('/api/transactions'),
+                fetch('/api/products')
             ]);
             const me = await resMe.json();
             const txs = await resTx.json();
+            const ps = await resP.json();
 
             if (me.authenticated && me.user) {
                 setPartner(me.user);
                 // Filter transactions for this partner
                 const myTxs = txs.filter((t: any) => t.partnerId === me.user.id);
                 setTransactions(myTxs);
+                setProducts(ps.filter((p: any) => p.partnerId === me.user.id));
             }
         } catch (e) {
             console.error("Failed to fetch mitra data", e);
@@ -49,11 +55,28 @@ export default function MitraApp() {
         }
     };
 
+    const handleAddProduct = async () => {
+        try {
+            const res = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newProduct)
+            });
+            if (res.ok) {
+                setShowAddProduct(false);
+                setNewProduct({ name: '', price: '0', stock: '50' });
+                fetchData();
+            }
+        } catch (e) {
+            console.error('Failed to add product', e);
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, []);
 
-    const commission = transactions.reduce((acc, tx) => acc + tx.adminFee, 0);
+    const commission = partner?.balance || 0;
 
     if (isLoading) return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -61,11 +84,11 @@ export default function MitraApp() {
         </div>
     );
     return (
-        <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center p-4">
-            <div className="max-w-[400px] w-full bg-white rounded-[48px] shadow-2xl border-[8px] border-slate-900 overflow-hidden relative aspect-[9/19.5]">
+        <div className="min-h-screen bg-[#f1f5f9] lg:flex items-center justify-center lg:p-4 p-0">
+            <div className="lg:max-w-[400px] w-full bg-white lg:rounded-[48px] rounded-none lg:shadow-2xl shadow-none lg:border-[8px] border-none border-slate-900 overflow-hidden relative lg:aspect-[9/19.5] h-screen lg:h-auto">
 
                 {/* Status Bar Mockup */}
-                <div className="h-12 bg-white flex justify-between items-center px-10 pt-4">
+                <div className="hidden lg:flex h-12 bg-white justify-between items-center px-10 pt-4">
                     <span className="text-sm font-bold">13:24</span>
                     <div className="flex gap-1.5">
                         <div className="w-4 h-4 rounded-full bg-slate-200"></div>
@@ -200,25 +223,26 @@ export default function MitraApp() {
                             >
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-black text-slate-900 text-xs uppercase tracking-widest">Katalog Produk</h3>
-                                    <button className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-lg">
+                                    <button onClick={() => setShowAddProduct(true)} className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
                                         <Plus size={16} />
                                     </button>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    {[
-                                        { name: "Minyak Goreng 1L", price: "Rp 15,500", stock: 50, icon: "🍳" },
-                                        { name: "Beras Pandan 5kg", price: "Rp 68,000", stock: 20, icon: "🌾" },
-                                        { name: "Gula Pasir 1kg", price: "Rp 14,500", stock: 100, icon: "🍬" }
-                                    ].map((item, i) => (
+                                    {products.map((item, i) => (
                                         <div key={i} className="bg-white border border-slate-100 p-4 rounded-3xl shadow-sm hover:shadow-xl transition-all">
-                                            <div className="text-3xl mb-3">{item.icon}</div>
+                                            <div className="text-3xl mb-3">{item.name.includes('Minyak') ? '🍳' : (item.name.includes('Beras') ? '🌾' : (item.name.includes('Gula') ? '🍬' : '📦'))}</div>
                                             <p className="text-xs font-black text-slate-900 mb-1 leading-tight">{item.name}</p>
-                                            <p className="text-emerald-600 font-black text-sm mb-2">{item.price}</p>
+                                            <p className="text-emerald-600 font-black text-sm mb-2">Rp {item.price.toLocaleString()}</p>
                                             <div className="bg-slate-50 rounded-full px-2 py-1 flex items-center justify-center">
                                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Stok: {item.stock}</p>
                                             </div>
                                         </div>
                                     ))}
+                                    {products.length === 0 && (
+                                        <div className="col-span-2 text-center py-10 opacity-50">
+                                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Belum ada produk</p>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         ) : (
@@ -351,6 +375,77 @@ export default function MitraApp() {
                             >
                                 Tutup QR
                             </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Add Product Modal Overlay */}
+                <AnimatePresence>
+                    {showAddProduct && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex flex-col justify-end p-0"
+                        >
+                            <motion.div
+                                initial={{ y: '100%' }}
+                                animate={{ y: 0 }}
+                                exit={{ y: '100%' }}
+                                className="bg-white rounded-t-[40px] p-8 border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.1)] relative"
+                            >
+                                <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
+                                <h3 className="text-lg font-black text-slate-900 mb-1">Tambah Produk</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-6">Masukkan info produk Anda</p>
+
+                                <div className="space-y-4 mb-8">
+                                    <div>
+                                        <label className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2 block">Nama Produk</label>
+                                        <input
+                                            type="text"
+                                            value={newProduct.name}
+                                            onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                                            placeholder="Contoh: Beras Pandan"
+                                            className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-emerald-500 font-bold text-sm"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2 block">Harga Jual (Rp)</label>
+                                            <input
+                                                type="number"
+                                                value={newProduct.price}
+                                                onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-emerald-500 font-bold text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2 block">Stok Awal</label>
+                                            <input
+                                                type="number"
+                                                value={newProduct.stock}
+                                                onChange={e => setNewProduct({ ...newProduct, stock: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-emerald-500 font-bold text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setShowAddProduct(false)}
+                                        className="flex-1 py-4 bg-slate-50 text-slate-400 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-100 transition-colors"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={handleAddProduct}
+                                        className="flex-[2] py-4 bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-emerald-700 transition-colors"
+                                    >
+                                        Simpan Produk
+                                    </button>
+                                </div>
+                            </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>

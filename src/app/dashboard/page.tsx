@@ -61,12 +61,33 @@ export default function Dashboard() {
         }
     };
 
-    const handleSettlement = (id: string) => {
+    const handleSettlement = async (id: string) => {
         setSettlingId(id);
-        setTimeout(() => {
-            setSettlingId(null);
+        try {
+            await fetch('/api/settlements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ partnerId: id })
+            });
             fetchData();
-        }, 2000);
+        } catch (e) {
+            console.error('Failed to settle', e);
+        } finally {
+            setSettlingId(null);
+        }
+    };
+
+    const approvePartner = async (id: string) => {
+        try {
+            await fetch('/api/partners/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ partnerId: id })
+            });
+            fetchData();
+        } catch (e) {
+            console.error('Failed to approve', e);
+        }
     };
 
     useEffect(() => {
@@ -278,10 +299,17 @@ export default function Dashboard() {
                                                 <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
                                                     {partner.category === 'MAKANAN' ? '🍜' : '🏪'}
                                                 </div>
-                                                <div className="px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                                    ACTIVE
+                                                <div className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${partner.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                                    {partner.status}
                                                 </div>
                                             </div>
+
+                                            {partner.status === 'PENDING' && (
+                                                <button onClick={() => approvePartner(partner.id)} className="w-full mb-4 py-3 bg-slate-900 text-white font-black text-[10px] uppercase rounded-[20px] tracking-widest shadow-xl hover:scale-105 transition-transform">
+                                                    Approve Mitra
+                                                </button>
+                                            )}
+
                                             <h4 className="text-2xl font-black text-slate-900 mb-1">{partner.shopName}</h4>
                                             <p className="text-sm font-medium text-slate-400 mb-8 line-clamp-1">{partner.address}</p>
 
@@ -328,14 +356,14 @@ export default function Dashboard() {
                                             <div className="flex items-center gap-12 text-center md:text-right">
                                                 <div>
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 leading-none">Saldo Belum Dicairkan</p>
-                                                    <p className="text-3xl font-black text-slate-900 tracking-tighter">Rp {((partner.transactionsCount || 0) * 1000).toLocaleString()}</p>
+                                                    <p className="text-3xl font-black text-slate-900 tracking-tighter">Rp {((partner.balance || 0)).toLocaleString()}</p>
                                                 </div>
                                                 <button
                                                     onClick={() => handleSettlement(partner.id)}
-                                                    disabled={settlingId === partner.id || (partner.transactionsCount || 0) === 0}
+                                                    disabled={settlingId === partner.id || (partner.balance || 0) <= 0}
                                                     className={`px-10 py-5 rounded-[24px] font-black uppercase tracking-widest text-[10px] transition-all ${settlingId === partner.id
                                                         ? 'bg-emerald-600 text-white animate-pulse'
-                                                        : (partner.transactionsCount || 0) === 0
+                                                        : (partner.balance || 0) <= 0
                                                             ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-50'
                                                             : 'bg-slate-900 text-white shadow-2xl shadow-slate-300 hover:scale-105 active:scale-95'
                                                         }`}

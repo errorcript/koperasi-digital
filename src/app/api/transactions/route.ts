@@ -17,7 +17,7 @@ export async function POST(req: Request) {
             const partner = await tx.partner.findUnique({ where: { id: partnerId } });
             if (!partner) throw new Error('Partner not found');
 
-            // 3. Deduct Balance
+            // 3. Deduct Balance from Member
             await tx.member.update({
                 where: { id: memberId },
                 data: {
@@ -26,7 +26,15 @@ export async function POST(req: Request) {
                 }
             });
 
-            // 4. Create Transaction
+            // 4. Add Balance to Partner
+            await tx.partner.update({
+                where: { id: partnerId },
+                data: {
+                    balance: { increment: totalAmount - partner.feePerTx }
+                }
+            });
+
+            // 5. Create Transaction
             return await tx.transaction.create({
                 data: {
                     memberId,
