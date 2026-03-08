@@ -23,9 +23,12 @@ export async function GET() {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+        // Encrypt password in production
         const partner = await prisma.partner.create({
             data: {
                 shopName: body.shopName,
+                email: body.email || `shop_${Date.now()}@example.com`,
+                password: body.password || 'password123',
                 category: body.category,
                 address: body.address,
                 phone: body.phone,

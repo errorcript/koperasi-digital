@@ -24,10 +24,42 @@ export default function MitraApp() {
     const [withdrawSuccess, setWithdrawSuccess] = useState(false);
     const [activeTab, setActiveTab] = useState<'home' | 'catalog' | 'wallet'>('home');
     const [transactions, setTransactions] = useState<any[]>([]);
+    const [partner, setPartner] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchData = async () => {
+        try {
+            const [resMe, resTx] = await Promise.all([
+                fetch('/api/auth/me'),
+                fetch('/api/transactions')
+            ]);
+            const me = await resMe.json();
+            const txs = await resTx.json();
+
+            if (me.authenticated && me.user) {
+                setPartner(me.user);
+                // Filter transactions for this partner
+                const myTxs = txs.filter((t: any) => t.partnerId === me.user.id);
+                setTransactions(myTxs);
+            }
+        } catch (e) {
+            console.error("Failed to fetch mitra data", e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        fetch('/api/transactions').then(res => res.json()).then(setTransactions);
+        fetchData();
     }, []);
+
+    const commission = transactions.reduce((acc, tx) => acc + tx.adminFee, 0);
+
+    if (isLoading) return (
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+            <Logo size={40} className="animate-bounce" />
+        </div>
+    );
     return (
         <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center p-4">
             <div className="max-w-[400px] w-full bg-white rounded-[48px] shadow-2xl border-[8px] border-slate-900 overflow-hidden relative aspect-[9/19.5]">
@@ -48,8 +80,8 @@ export default function MitraApp() {
                         <div className="flex items-center gap-3">
                             <Logo size={14} className="bg-slate-900 p-1 shadow-none" />
                             <div>
-                                <h1 className="text-lg font-black text-slate-900 leading-none mb-1">Warung Barokah</h1>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mitra ID #0421</p>
+                                <h1 className="text-lg font-black text-slate-900 leading-none mb-1">{partner?.shopName || 'Mitra KOPWARUNG'}</h1>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mitra ID #{partner?.id.slice(-4) || '----'}</p>
                             </div>
                         </div>
                         <button className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600 relative">
@@ -66,7 +98,7 @@ export default function MitraApp() {
                     >
                         <div className="relative z-10">
                             <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2 opacity-60">Komisi Terkumpul</p>
-                            <p className="text-3xl font-black mb-6 leading-none tracking-tight">Rp 1.482.000</p>
+                            <p className="text-3xl font-black mb-6 leading-none tracking-tight">Rp {commission.toLocaleString()}</p>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => {
@@ -303,7 +335,7 @@ export default function MitraApp() {
                             </div>
 
                             <h3 className="text-white font-black text-xl mb-2">QR Pembayaran</h3>
-                            <p className="text-emerald-400 text-xs mb-8 uppercase tracking-[0.2em] font-black">Warung Barokah</p>
+                            <p className="text-emerald-400 text-xs mb-8 uppercase tracking-[0.2em] font-black">{partner?.shopName || 'Mitra'}</p>
 
                             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 w-full mb-12">
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Status Scanner</p>

@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Calculator,
   Smartphone,
+  Download,
   LayoutDashboard,
   ShieldCheck,
   TrendingUp,
@@ -27,7 +28,9 @@ import {
   Server,
   Triangle,
   Code,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { Logo } from '@/components/Logo';
@@ -41,20 +44,34 @@ export default function Home() {
   const [scanResult, setScanResult] = useState<any>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [session, setSession] = useState<any>(null);
 
-  const [activeTab, setActiveTab] = useState<'home' | 'history'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'history' | 'account'>('home');
   const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchMember();
-    fetch('/api/products').then(res => res.json()).then(setProducts);
+    const init = async () => {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (data.authenticated) {
+        setSession(data.user);
+        fetchMember(); // This will fetch via zustand which I should also update to use session
+      }
 
-    // Fetch member transactions
-    fetch('/api/transactions').then(res => res.json()).then(data => {
-      // For demo, we assume the first member is ours
-      setMemberTransactions(data);
-    });
-  }, []);
+      const [resP, resT] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/transactions')
+      ]);
+      const pData = await resP.json();
+      const tData = await resT.json();
+
+      setProducts(pData);
+      if (data.authenticated) {
+        setMemberTransactions(tData.filter((t: any) => t.memberId === data.user.id));
+      }
+    };
+    init();
+  }, [fetchMember]);
 
   const potentialRevenue = useMemo(() => transactionsUI * fee, [transactionsUI, fee]);
 
@@ -120,7 +137,13 @@ export default function Home() {
             <a href="#solusi" className="hover:text-emerald-600 transition-colors">Solusi</a>
             <a href="#mockup" className="hover:text-emerald-600 transition-colors">Demo</a>
             <a href="#biaya" className="hover:text-emerald-600 transition-colors">Estimasi Biaya</a>
-            <Link href="/dashboard" className="text-emerald-600 border-b-2 border-emerald-600 pb-1">Admin Preview</Link>
+            {!session ? (
+              <Link href="/login" className="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all">Masuk</Link>
+            ) : (
+              <Link href={session.role === 'ADMIN' ? '/dashboard' : (session.role === 'PARTNER' ? '/mitra' : '/')} className="text-emerald-600 border-b-2 border-emerald-600 pb-1 flex items-center gap-2">
+                <ShieldCheck size={14} /> {session.role === 'ADMIN' ? 'Dashboard Admin' : 'App Saya'}
+              </Link>
+            )}
           </div>
         </div>
       </nav>
@@ -141,11 +164,15 @@ export default function Home() {
             <p className="text-lg text-slate-500 mb-10 leading-relaxed max-w-lg">
               Anggota belanja di warung terdekat, bayar via aplikasi, koperasi dapat bagi hasil otomatis. <b>Alfagift-style for local communities.</b>
             </p>
-            <div className="flex gap-4">
-              <button className="px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all shadow-xl">
-                Download Proposal (PDF)
-              </button>
-              <Link href="/mitra/register" className="px-8 py-4 bg-white border border-slate-200 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <a
+                href="https://github.com/errorcript/koperasi-digital/releases"
+                target="_blank"
+                className="px-8 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-emerald-600 transition-all shadow-xl flex items-center justify-center gap-2 group"
+              >
+                <Download size={20} className="group-hover:bounce" /> Unduh APK (Beta)
+              </a>
+              <Link href="/mitra/register" className="px-8 py-4 bg-white border border-slate-200 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
                 Pendaftaran Mitra <ArrowRight size={18} />
               </Link>
             </div>
@@ -250,7 +277,7 @@ export default function Home() {
                           </div>
                         </div>
                       </motion.div>
-                    ) : (
+                    ) : activeTab === 'history' ? (
                       <motion.div
                         key="history"
                         initial={{ opacity: 0, x: 10 }}
@@ -282,6 +309,49 @@ export default function Home() {
                               <p className="text-[10px] text-slate-900 font-black uppercase tracking-widest">Belum ada transaksi</p>
                             </div>
                           )}
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="account"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-6"
+                      >
+                        <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100 text-center">
+                          <div className="w-16 h-16 bg-slate-900 rounded-[24px] mx-auto mb-4 flex items-center justify-center text-white text-xl font-black">
+                            {member?.name?.slice(0, 1) || '?'}
+                          </div>
+                          <h4 className="font-black text-slate-900 mb-1">{member?.name || 'Guest User'}</h4>
+                          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Anggota {member?.role}</p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <button className="w-full p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><Smartphone size={16} /></div>
+                              <span className="text-xs font-bold text-slate-600">Pengaturan Akun</span>
+                            </div>
+                            <ChevronRight size={16} className="text-slate-300" />
+                          </button>
+                          <button className="w-full p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center"><HelpCircle size={16} /></div>
+                              <span className="text-xs font-bold text-slate-600">Pusat Bantuan</span>
+                            </div>
+                            <ChevronRight size={16} className="text-slate-300" />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              await fetch('/api/auth/logout', { method: 'POST' });
+                              window.location.reload();
+                            }}
+                            className="w-full p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 mt-4"
+                          >
+                            <div className="w-8 h-8 bg-white text-red-600 rounded-xl flex items-center justify-center shadow-sm"><LogOut size={16} /></div>
+                            <span className="text-xs font-black text-red-600 uppercase tracking-widest">Keluar Aplikasi</span>
+                          </button>
                         </div>
                       </motion.div>
                     )}
@@ -323,10 +393,16 @@ export default function Home() {
                   <CreditCard size={18} />
                   <span className="text-[8px] font-black uppercase tracking-tighter">Riwayat</span>
                 </button>
-                <div className="text-slate-300 flex flex-col items-center gap-1">
+                <button
+                  onClick={() => {
+                    setScanResult(null);
+                    setActiveTab('account');
+                  }}
+                  className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'account' ? 'text-emerald-600 scale-110' : 'text-slate-300'}`}
+                >
                   <Users size={18} />
                   <span className="text-[8px] font-black uppercase tracking-tighter">Akun</span>
-                </div>
+                </button>
               </div>
 
               {/* QR Scanner Simulation Overlay */}
@@ -455,8 +531,8 @@ export default function Home() {
 
             {/* Decorative Blobs */}
             <div className="absolute -z-10 top-20 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-emerald-100 rounded-full blur-[100px] opacity-60"></div>
-          </motion.div>
-        </div>
+          </motion.div >
+        </div >
       </section>
 
       {/* Breakdown Biaya Section */}
@@ -609,6 +685,63 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Mobile App Focus Section */}
+      <section className="py-24 bg-white relative overflow-hidden" id="get-app">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="bg-slate-900 rounded-[64px] p-12 md:p-24 text-white flex flex-col md:flex-row items-center justify-between gap-16 shadow-[0_50px_100px_-20px_rgba(15,23,42,0.5)] border border-white/10">
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight">Miliki Aplikasi <br /><span className="text-emerald-400">Di Genggaman</span></h2>
+              <p className="text-slate-400 text-lg mb-12 max-w-xl">Aplikasi KopWarung sekarang tersedia dalam dua pilihan instalasi. Langsung lewat browser (PWA) atau download file APK melalui GitHub.</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="p-8 bg-white/5 rounded-[32px] border border-white/10 flex flex-col justify-between hover:bg-white/10 transition-all">
+                  <div>
+                    <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20">
+                      <Zap size={24} />
+                    </div>
+                    <h4 className="text-xl font-black mb-2">Instan (PWA)</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed italic mb-8">Paling direkomendasikan. Langsung muncul di menu HP tanpa download file besar.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Trigger custom PWA prompt
+                      window.dispatchEvent(new Event('beforeinstallprompt'));
+                    }}
+                    className="w-full py-4 bg-white text-slate-900 font-black rounded-2xl uppercase tracking-widest text-[10px] items-center gap-2 flex justify-center"
+                  >
+                    <Smartphone size={14} /> Pasang via Browser
+                  </button>
+                </div>
+
+                <div className="p-8 bg-white/5 rounded-[32px] border border-white/10 flex flex-col justify-between hover:bg-white/10 transition-all">
+                  <div>
+                    <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
+                      <Download size={24} />
+                    </div>
+                    <h4 className="text-xl font-black mb-2">Build GitHub (APK)</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed italic mb-8">Download manual file Android APK yang diproduksi otomatis oleh GitHub Actions.</p>
+                  </div>
+                  <a
+                    href="https://github.com/errorcript/koperasi-digital/releases"
+                    target="_blank"
+                    className="w-full py-4 bg-emerald-600 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] items-center gap-2 flex justify-center"
+                  >
+                    <Logo size={12} className="bg-transparent shadow-none" /> Unduh APK Sekarang
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full md:w-[350px] relative hidden lg:block">
+              <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full"></div>
+              <div className="relative border-[8px] border-white/10 rounded-[40px] overflow-hidden shadow-2xl skew-y-3 rotate-3 hover:rotate-0 hover:skew-y-0 transition-all duration-700">
+                <img src="/launcher-icon.png" alt="KopWarung App" className="w-full h-auto" />
+              </div>
+            </div>
           </div>
         </div>
       </section>

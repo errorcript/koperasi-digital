@@ -28,22 +28,30 @@ export default function Dashboard() {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalBalance: 0, totalTransactions: 0, totalPartners: 0, totalMemberBalance: 0 });
     const [settlingId, setSettlingId] = useState<string | null>(null);
+    const [admin, setAdmin] = useState<any>(null);
 
     const fetchData = async () => {
         try {
-            const [resP, resT, resM] = await Promise.all([
+            const [resP, resT, resM, resMe] = await Promise.all([
                 fetch('/api/partners'),
                 fetch('/api/transactions'),
-                fetch('/api/member')
+                fetch('/api/member'),
+                fetch('/api/auth/me')
             ]);
             const p = await resP.json();
             const t = await resT.json();
             const m = await resM.json();
+            const me = await resMe.json();
 
             setPartners(p);
             setTransactions(t);
+            setAdmin(me.user);
+
+            // Calculate total member balance
+            const memberBalanceSum = Array.isArray(m) ? m.reduce((acc: number, curr: any) => acc + curr.balance, 0) : (m.balance || 0);
+
             setStats({
-                totalMemberBalance: m.balance,
+                totalMemberBalance: memberBalanceSum,
                 totalTransactions: t.length,
                 totalPartners: p.length,
                 totalBalance: t.reduce((acc: number, curr: any) => acc + curr.adminFee, 0)
@@ -87,8 +95,8 @@ export default function Dashboard() {
                             key={item.id}
                             onClick={() => setActiveTab(item.id as any)}
                             className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black uppercase tracking-[0.15em] text-[10px] ${activeTab === item.id
-                                    ? 'bg-emerald-600 text-white shadow-2xl shadow-emerald-900/40'
-                                    : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'
+                                ? 'bg-emerald-600 text-white shadow-2xl shadow-emerald-900/40'
+                                : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'
                                 }`}
                         >
                             <item.icon size={18} /> {item.label}
@@ -97,12 +105,25 @@ export default function Dashboard() {
                 </nav>
 
                 <div className="p-8 bg-white/5 border-t border-white/5">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center font-black text-white shadow-lg">NB</div>
-                        <div>
-                            <p className="text-xs font-black">Neoma Admin</p>
-                            <p className="text-[10px] text-slate-500 font-bold">Manager</p>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center font-black text-white shadow-lg uppercase">
+                                {admin?.username?.slice(0, 2) || 'AD'}
+                            </div>
+                            <div>
+                                <p className="text-xs font-black">{admin?.username || 'Admin'}</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Administrator</p>
+                            </div>
                         </div>
+                        <button
+                            onClick={async () => {
+                                await fetch('/api/auth/logout', { method: 'POST' });
+                                window.location.href = '/login';
+                            }}
+                            className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
+                        >
+                            <Activity size={16} className="rotate-90" /> {/* Mocking logout icon as Activity rotated or something simpler */}
+                        </button>
                     </div>
                 </div>
             </aside>
@@ -313,10 +334,10 @@ export default function Dashboard() {
                                                     onClick={() => handleSettlement(partner.id)}
                                                     disabled={settlingId === partner.id || (partner.transactionsCount || 0) === 0}
                                                     className={`px-10 py-5 rounded-[24px] font-black uppercase tracking-widest text-[10px] transition-all ${settlingId === partner.id
-                                                            ? 'bg-emerald-600 text-white animate-pulse'
-                                                            : (partner.transactionsCount || 0) === 0
-                                                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-50'
-                                                                : 'bg-slate-900 text-white shadow-2xl shadow-slate-300 hover:scale-105 active:scale-95'
+                                                        ? 'bg-emerald-600 text-white animate-pulse'
+                                                        : (partner.transactionsCount || 0) === 0
+                                                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-50'
+                                                            : 'bg-slate-900 text-white shadow-2xl shadow-slate-300 hover:scale-105 active:scale-95'
                                                         }`}
                                                 >
                                                     {settlingId === partner.id ? 'Processing...' : 'Transfer Sekarang'}

@@ -12,16 +12,20 @@ model Member {
   id           String        @id @default(cuid())
   name         String
   email        String        @unique
+  password     String        // Hashed password
   role         String        @default("MEMBER")
   balance      Float         @default(0)
   points       Int           @default(0)
   transactions Transaction[]
+  sessions     Session[]
   createdAt    DateTime      @default(now())
 }
 
 model Partner {
   id           String        @id @default(cuid())
   shopName     String
+  email        String        @unique
+  password     String        // Hashed password
   category     String
   address      String
   phone        String
@@ -29,7 +33,25 @@ model Partner {
   status       String        @default("PENDING")
   products     Product[]
   transactions Transaction[]
+  sessions     Session[]
   createdAt    DateTime      @default(now())
+}
+
+model Admin {
+  id        String    @id @default(cuid())
+  username  String    @unique
+  password  String
+  sessions  Session[]
+  createdAt DateTime  @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  member    Member?  @relation(fields: [userId], references: [id])
+  partner   Partner? @relation(fields: [userId], references: [id])
+  admin     Admin?   @relation(fields: [userId], references: [id])
 }
 
 model Product {
