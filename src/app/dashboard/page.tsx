@@ -54,8 +54,8 @@ export default function Dashboard() {
                         <button
                             key={idx}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${item.active
-                                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100'
-                                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                                 }`}
                         >
                             {item.icon}
@@ -173,7 +173,7 @@ export default function Dashboard() {
                                             <div className="text-emerald-400">
                                                 <ArrowUpRight size={20} />
                                             </div>
-                                        </tr>
+                                        </div>
                                     ))}
                                 </div>
                                 <div className="mt-12 p-6 bg-white/5 rounded-[24px] border border-white/10">
