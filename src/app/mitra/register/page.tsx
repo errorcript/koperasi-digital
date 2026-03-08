@@ -19,9 +19,23 @@ import Link from 'next/link';
 export default function MitraRegister() {
     const [step, setStep] = useState(1);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [formData, setFormData] = useState({ shopName: '', category: 'Sembako & Kelontong', address: '', phone: '' });
 
     const nextStep = () => setStep(s => s + 1);
     const prevStep = () => setStep(s => s - 1);
+
+    const handleRegister = async () => {
+        try {
+            const res = await fetch('/api/partners', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            if (res.ok) setIsSubmitted(true);
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     if (isSubmitted) {
         return (
@@ -72,11 +86,21 @@ export default function MitraRegister() {
                                 <div className="space-y-6">
                                     <div>
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Nama Warung / Toko</label>
-                                        <input type="text" placeholder="Contoh: Warung Barokah Jaya" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-emerald-500 transition-all font-semibold" />
+                                        <input
+                                            type="text"
+                                            value={formData.shopName}
+                                            onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
+                                            placeholder="Contoh: Warung Barokah Jaya"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-emerald-500 transition-all font-semibold"
+                                        />
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Kategori Usaha</label>
-                                        <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-emerald-500 transition-all font-semibold appearance-none">
+                                        <select
+                                            value={formData.category}
+                                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-emerald-500 transition-all font-semibold appearance-none"
+                                        >
                                             <option>Sembako & Kelontong</option>
                                             <option>Makanan & Minuman</option>
                                             <option>Pulsa & PPOB</option>
@@ -99,13 +123,24 @@ export default function MitraRegister() {
                                 <div className="space-y-6">
                                     <div>
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Alamat Lengkap</label>
-                                        <textarea placeholder="Jalan, Desa, RT/RW..." className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-emerald-500 transition-all font-semibold h-24 resize-none"></textarea>
+                                        <textarea
+                                            value={formData.address}
+                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            placeholder="Jalan, Desa, RT/RW..."
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-emerald-500 transition-all font-semibold h-24 resize-none"
+                                        ></textarea>
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">No. WhatsApp Aktif</label>
                                         <div className="relative">
                                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input type="tel" placeholder="0812xxxx" className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 py-4 outline-none focus:ring-2 ring-emerald-500 transition-all font-semibold" />
+                                            <input
+                                                type="tel"
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                placeholder="0812xxxx"
+                                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 py-4 outline-none focus:ring-2 ring-emerald-500 transition-all font-semibold"
+                                            />
                                         </div>
                                     </div>
                                     <div className="flex gap-4">
@@ -143,7 +178,7 @@ export default function MitraRegister() {
                                         <button onClick={prevStep} className="flex-1 py-5 bg-white border border-slate-200 text-slate-500 font-black rounded-2xl hover:bg-slate-50 transition-all">
                                             Kembali
                                         </button>
-                                        <button onClick={() => setIsSubmitted(true)} className="flex-[2] py-5 bg-emerald-600 text-white font-black rounded-2xl shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
+                                        <button onClick={handleRegister} className="flex-[2] py-5 bg-emerald-600 text-white font-black rounded-2xl shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
                                             Daftar Jadi Mitra <CheckCircle2 size={20} />
                                         </button>
                                     </div>

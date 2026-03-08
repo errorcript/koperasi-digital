@@ -1,0 +1,57 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Member {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  role         String        @default("MEMBER")
+  balance      Float         @default(0)
+  points       Int           @default(0)
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+}
+
+model Partner {
+  id           String        @id @default(cuid())
+  shopName     String
+  category     String
+  address      String
+  phone        String
+  feePerTx     Float         @default(1000)
+  status       String        @default("PENDING")
+  products     Product[]
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  partner       Partner  @relation(fields: [partnerId], references: [id])
+  partnerId     String
+  name          String
+  price         Float
+  originalPrice Float?
+  stock         Int      @default(50)
+  image         String?
+  createdAt     DateTime @default(now())
+}
+
+model Transaction {
+  id           String   @id @default(cuid())
+  member       Member   @relation(fields: [memberId], references: [id])
+  memberId     String
+  partner      Partner  @relation(fields: [partnerId], references: [id])
+  partnerId    String
+  totalAmount  Float
+  adminFee     Float
+  pointsEarned Int
+  status       String   @default("SUCCESS")
+  createdAt    DateTime @default(now())
+}

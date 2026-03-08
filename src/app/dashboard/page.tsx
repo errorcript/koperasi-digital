@@ -16,20 +16,30 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useEffect, useState, useMemo } from 'react';
 
 export default function Dashboard() {
-    const stats = [
-        { label: 'Total Anggota', value: '1,284', change: '+12%', icon: <Users className="text-blue-600" />, bg: 'bg-blue-50' },
-        { label: 'Total Mitra Warung', value: '42', change: '+3', icon: <Store className="text-amber-600" />, bg: 'bg-amber-50' },
-        { label: 'Revenue Hari Ini', value: 'Rp 842,500', change: '+24%', icon: <DollarSign className="text-emerald-600" />, bg: 'bg-emerald-50' },
-        { label: 'Total Transaksi', value: '12,490', change: '+5%', icon: <Activity className="text-purple-600" />, bg: 'bg-purple-50' }
-    ];
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [partners, setPartners] = useState<any[]>([]);
+    const [summary, setSummary] = useState({ totalMembers: 0, totalSales: 0, totalFee: 0 });
 
-    const recentTransactions = [
-        { id: 'TX-001', member: 'Budi Santoso', warung: 'Warung Barokah', amount: 'Rp 45,000', fee: 'Rp 1,000', status: 'Success', time: '10:24' },
-        { id: 'TX-002', member: 'Siti Aminah', warung: 'Toko Makmur', amount: 'Rp 120,000', fee: 'Rp 1,000', status: 'Success', time: '10:15' },
-        { id: 'TX-003', member: 'Andi Wijaya', warung: 'Warung Barokah', amount: 'Rp 15,000', fee: 'Rp 500', status: 'Pending', time: '10:02' },
-        { id: 'TX-004', member: 'Lina Marlina', warung: 'Sembako Jaya', amount: 'Rp 64,500', fee: 'Rp 1,000', status: 'Success', time: '09:55' }
+    useEffect(() => {
+        fetch('/api/transactions').then(res => res.json()).then(setTransactions);
+        fetch('/api/partners').then(res => res.json()).then(setPartners);
+        fetch('/api/member').then(res => res.json()).then(m => {
+            setSummary(prev => ({ ...prev, totalMembers: 1 })); // Mock logic for now
+        });
+    }, []);
+
+    const totalRevenue = useMemo(() => {
+        return transactions.reduce((acc, tx) => acc + tx.adminFee, 0);
+    }, [transactions]);
+
+    const stats = [
+        { label: 'Total Anggota', value: '1', change: '+0', icon: <Users className="text-blue-600" />, bg: 'bg-blue-50' },
+        { label: 'Total Mitra Warung', value: partners.length.toString(), change: `+${partners.length}`, icon: <Store className="text-amber-600" />, bg: 'bg-amber-50' },
+        { label: 'Revenue Hari Ini', value: `Rp ${totalRevenue.toLocaleString()}`, change: '+100%', icon: <DollarSign className="text-emerald-600" />, bg: 'bg-emerald-50' },
+        { label: 'Total Transaksi', value: transactions.length.toString(), change: `+${transactions.length}`, icon: <Activity className="text-purple-600" />, bg: 'bg-purple-50' }
     ];
 
     return (
@@ -131,23 +141,25 @@ export default function Dashboard() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
-                                        {recentTransactions.map((tx) => (
+                                        {transactions.length > 0 ? transactions.map((tx) => (
                                             <tr key={tx.id} className="text-sm hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <p className="font-bold text-slate-900">{tx.member}</p>
-                                                    <p className="text-xs text-slate-400">{tx.time}</p>
+                                                    <p className="font-bold text-slate-900">{tx.member.name}</p>
+                                                    <p className="text-xs text-slate-400">{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                 </td>
-                                                <td className="px-6 py-4 text-slate-600 font-medium">{tx.warung}</td>
-                                                <td className="px-6 py-4 font-bold text-slate-900">{tx.amount}</td>
-                                                <td className="px-6 py-4 text-emerald-600 font-bold">{tx.fee}</td>
+                                                <td className="px-6 py-4 text-slate-600 font-medium">{tx.partner.shopName}</td>
+                                                <td className="px-6 py-4 font-bold text-slate-900">Rp {tx.totalAmount.toLocaleString()}</td>
+                                                <td className="px-6 py-4 text-emerald-600 font-bold">Rp {tx.adminFee.toLocaleString()}</td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${tx.status === 'Success' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${tx.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                                                         }`}>
                                                         {tx.status}
                                                     </span>
                                                 </td>
                                             </tr>
-                                        ))}
+                                        )) : (
+                                            <tr><td colSpan={5} className="px-6 py-10 text-center text-slate-400 font-medium">Belum ada transaksi real di database.</td></tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -158,18 +170,14 @@ export default function Dashboard() {
                             <div className="relative z-10">
                                 <h3 className="text-xl font-bold mb-6">Top Mitra Warung</h3>
                                 <div className="space-y-6">
-                                    {[
-                                        { name: "Warung Barokah", tx: "142 tx", color: "bg-emerald-500" },
-                                        { name: "Toko Sembako Makmur", tx: "98 tx", color: "bg-blue-500" },
-                                        { name: "Mitra Jaya Abadi", tx: "76 tx", color: "bg-amber-500" }
-                                    ].map((mitra, i) => (
-                                        <div key={i} className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 ${mitra.color} rounded-2xl flex items-center justify-center font-bold text-white text-lg`}>
+                                    {partners.slice(0, 3).map((mitra, i) => (
+                                        <div key={mitra.id} className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 ${i === 0 ? 'bg-emerald-500' : i === 1 ? 'bg-blue-500' : 'bg-amber-500'} rounded-2xl flex items-center justify-center font-bold text-white text-lg`}>
                                                 {i + 1}
                                             </div>
                                             <div className="flex-1">
-                                                <p className="font-bold">{mitra.name}</p>
-                                                <p className="text-xs text-slate-400">{mitra.tx} minggu ini</p>
+                                                <p className="font-bold">{mitra.shopName}</p>
+                                                <p className="text-xs text-slate-400">{mitra.transactionsCount || 0} tx minggu ini</p>
                                             </div>
                                             <div className="text-emerald-400">
                                                 <ArrowUpRight size={20} />
@@ -194,20 +202,18 @@ export default function Dashboard() {
                             <Link href="/mitra/register" className="text-xs font-bold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full hover:bg-emerald-100 transition-all">+ Tambah Mitra</Link>
                         </div>
                         <div className="space-y-4">
-                            {[
-                                { name: "Warung Barokah", status: "Active", volume: "Rp 4.2M", color: "bg-emerald-500" },
-                                { name: "Toko Sembako Makmur", status: "Active", volume: "Rp 2.8M", color: "bg-emerald-500" },
-                                { name: "Sembako Jaya", status: "Pending", volume: "-", color: "bg-amber-500" },
-                                { name: "Toko Kelontong Siti", status: "Suspended", volume: "Rp 1.1M", color: "bg-red-500" }
-                            ].map((m, i) => (
+                            {partners.map((m, i) => (
                                 <div key={i} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-2 h-2 rounded-full ${m.color}`}></div>
-                                        <span className="text-sm font-bold text-slate-800">{m.name}</span>
+                                        <div className={`w-2 h-2 rounded-full ${m.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-slate-800 leading-none mb-1">{m.shopName}</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{m.category}</span>
+                                        </div>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] font-black uppercase text-slate-400">{m.status}</p>
-                                        <p className="text-xs font-bold text-slate-900">{m.volume}</p>
+                                        <p className="text-xs font-bold text-slate-900">Fee: Rp {m.feePerTx}</p>
                                     </div>
                                 </div>
                             ))}

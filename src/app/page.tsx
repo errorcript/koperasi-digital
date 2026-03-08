@@ -27,10 +27,19 @@ import {
   Server,
   Code
 } from 'lucide-react';
+import { useAppStore } from '@/lib/store';
+import { useEffect } from 'react';
 
 export default function Home() {
+  const { member, fetchMember } = useAppStore();
+  const [products, setProducts] = useState<any[]>([]);
   const [transactions, setTransactions] = useState(5000);
   const [fee, setFee] = useState(1000);
+
+  useEffect(() => {
+    fetchMember();
+    fetch('/api/products').then(res => res.json()).then(setProducts);
+  }, []);
 
   const potentialRevenue = useMemo(() => transactions * fee, [transactions, fee]);
 
@@ -110,8 +119,8 @@ export default function Home() {
               <div className="bg-emerald-600 p-6 pt-12 text-white pb-10">
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <p className="text-xs opacity-80">Halo, Budi Santoso</p>
-                    <p className="text-lg font-bold">Anggota Platinum 🌟</p>
+                    <p className="text-xs opacity-80">Halo, {member?.name || 'Anggota'}</p>
+                    <p className="text-lg font-bold">Anggota {member?.role || 'Basic'} 🌟</p>
                   </div>
                   <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                     <Users size={20} />
@@ -120,17 +129,17 @@ export default function Home() {
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex justify-between items-center">
                   <div>
                     <p className="text-[10px] uppercase font-bold opacity-70">Saldo Koperasi</p>
-                    <p className="text-xl font-black">Rp 2.450.000</p>
+                    <p className="text-xl font-black">Rp {(member?.balance || 0).toLocaleString()}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] uppercase font-bold opacity-70">Poin Belanja</p>
-                    <p className="text-lg font-bold text-amber-300">12.450</p>
+                    <p className="text-lg font-bold text-amber-300">{member?.points || 0}</p>
                   </div>
                 </div>
               </div>
 
               {/* App Features */}
-              <div className="p-4 -mt-6 bg-white rounded-t-[30px]">
+              <div className="p-4 -mt-6 bg-white rounded-t-[30px] h-full">
                 <div className="grid grid-cols-4 gap-2 mb-6">
                   {[
                     { icon: <CreditCard />, label: "Bayar", color: "bg-blue-50 text-blue-600" },
@@ -149,23 +158,23 @@ export default function Home() {
 
                 {/* Alfagift Style Product Feed */}
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-extrabold text-sm">Flash Sale Warung ⚡</h3>
+                  <h3 className="font-extrabold text-sm">Produk Mitra Real-time ⚡</h3>
                   <button className="text-[10px] text-emerald-600 font-bold">Lihat Semua</button>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { name: "Minyak Goreng 1L", price: "Rp 14.500", ori: "Rp 17.000", img: "🍳" },
-                    { name: "Beras Cap Lele 5kg", price: "Rp 62.000", ori: "Rp 68.000", img: "🌾" }
-                  ].map((p, i) => (
-                    <div key={i} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-40 scrollbar-hide">
+                  {products.length > 0 ? products.map((p, i) => (
+                    <div key={i} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
                       <div className="aspect-square bg-white rounded-xl mb-2 flex items-center justify-center text-3xl">
-                        {p.img}
+                        {p.name.includes('Minyak') ? '🍳' : (p.name.includes('Beras') ? '🌾' : '📦')}
                       </div>
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter mb-1">{p.partner.shopName}</p>
                       <p className="text-xs font-bold text-slate-800 line-clamp-1">{p.name}</p>
-                      <p className="text-emerald-600 font-black text-sm">{p.price}</p>
-                      <p className="text-[10px] text-slate-400 line-through">{p.ori}</p>
+                      <p className="text-emerald-700 font-black text-sm">Rp {p.price.toLocaleString()}</p>
+                      {p.originalPrice && <p className="text-[10px] text-slate-400 line-through">Rp {p.originalPrice.toLocaleString()}</p>}
                     </div>
-                  ))}
+                  )) : (
+                    [1, 2].map(i => <div key={i} className="aspect-video bg-slate-100 animate-pulse rounded-2xl"></div>)
+                  )}
                 </div>
               </div>
 
@@ -329,7 +338,7 @@ export default function Home() {
             ].map((step, idx) => (
               <div key={idx} className={`relative flex items-center gap-8 ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
                 <div className="flex-1 hidden md:block"></div>
-                <div className={`w-12 h-12 rounded-full ${step.color} border-4 border-white shadow-lg z-10 shrink-0`}></div>
+                <div className="w-12 h-12 rounded-full bg-white border-4 border-white shadow-lg z-10 shrink-0"></div>
                 <div className="flex-1 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
                   <span className={`text-[10px] font-black uppercase text-white px-3 py-1 rounded-full ${step.color} mb-3 inline-block`}>{step.phase}</span>
                   <h4 className="text-xl font-bold mb-2">{step.title}</h4>
@@ -344,10 +353,18 @@ export default function Home() {
       <footer className="py-20 bg-slate-50 border-t border-slate-200 text-center">
         <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-4">Gaskan Proyek Ini Sekarang</p>
         <h2 className="text-3xl font-black mb-8 px-6">Siap Bangun Ekosistem Koperasi Masa Depan?</h2>
-        <div className="flex justify-center gap-4">
-          <button className="px-10 py-5 bg-emerald-600 text-white font-black rounded-[24px] shadow-2xl shadow-emerald-200 hover:scale-105 transition-all">
-            Mulai Diskusi Teknis
-          </button>
+        <div className="flex flex-col items-center gap-6">
+          <div className="flex justify-center gap-4">
+            <button className="px-10 py-5 bg-emerald-600 text-white font-black rounded-[24px] shadow-2xl shadow-emerald-200 hover:scale-105 transition-all">
+              Mulai Diskusi Teknis
+            </button>
+          </div>
+          <div className="mt-8">
+            <p className="text-sm font-bold text-slate-400 mb-2">WHATSAPP DISKUSI NEOMA (BREE)</p>
+            <a href="https://wa.me/6287734547944" target="_blank" className="text-2xl font-black text-slate-900 border-b-4 border-emerald-500 hover:text-emerald-600 transition-all">
+              +62 877-3454-7944
+            </a>
+          </div>
         </div>
       </footer>
     </main>
