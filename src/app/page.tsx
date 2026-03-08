@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -25,10 +25,12 @@ import {
   Clock,
   Globe,
   Server,
-  Code
+  Triangle,
+  Code,
+  ArrowUpRight
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
-import { useEffect } from 'react';
+import { Logo } from '@/components/Logo';
 
 export default function Home() {
   const { member, fetchMember } = useAppStore();
@@ -68,15 +70,15 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 glass border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold">K</div>
-            <span className="font-black text-xl tracking-tighter">KOPWARUNG<span className="text-emerald-600">.DIGITAL</span></span>
+          <div className="flex items-center gap-3">
+            <Logo size={18} />
+            <span className="text-2xl font-black text-slate-900 tracking-tighter">KOPWARUNG<span className="text-emerald-500">.</span></span>
           </div>
           <div className="hidden md:flex gap-8 text-sm font-bold text-slate-500">
             <a href="#solusi" className="hover:text-emerald-600 transition-colors">Solusi</a>
             <a href="#mockup" className="hover:text-emerald-600 transition-colors">Demo</a>
             <a href="#biaya" className="hover:text-emerald-600 transition-colors">Estimasi Biaya</a>
-            <a href="/dashboard" className="text-emerald-600 border-b-2 border-emerald-600 pb-1">Admin Preview</a>
+            <Link href="/dashboard" className="text-emerald-600 border-b-2 border-emerald-600 pb-1">Admin Preview</Link>
           </div>
         </div>
       </nav>
@@ -116,30 +118,29 @@ export default function Home() {
           >
             <div className="w-full max-w-[340px] mx-auto bg-white rounded-[40px] border-[10px] border-slate-900 h-[700px] shadow-2xl overflow-hidden relative">
               {/* App Header */}
-              <div className="bg-emerald-600 p-6 pt-12 text-white pb-10">
-                <div className="flex justify-between items-center mb-6">
+              <div className="bg-slate-900 p-6 pt-12 text-white pb-10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                <div className="flex justify-between items-center mb-6 relative z-10">
                   <div>
-                    <p className="text-xs opacity-80">Halo, {member?.name || 'Anggota'}</p>
-                    <p className="text-lg font-bold">Anggota {member?.role || 'Basic'} 🌟</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest opacity-60 mb-1 leading-none">Anggota {member?.role || 'Basic'}.</p>
+                    <p className="text-xl font-black">{member?.name || 'Halo, Mitra'}</p>
                   </div>
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <Users size={20} />
-                  </div>
+                  <Logo size={20} className="shadow-none border border-white/20" />
                 </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex justify-between items-center">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex justify-between items-center relative z-10 shadow-2xl">
                   <div>
-                    <p className="text-[10px] uppercase font-bold opacity-70">Saldo Koperasi</p>
-                    <p className="text-xl font-black">Rp {(member?.balance || 0).toLocaleString()}</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest text-emerald-400 mb-1">Saldo Koperasi</p>
+                    <p className="text-2xl font-black">Rp {(member?.balance || 0).toLocaleString()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold opacity-70">Poin Belanja</p>
-                    <p className="text-lg font-bold text-amber-300">{member?.points || 0}</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest text-amber-400 mb-1">Poin</p>
+                    <p className="text-xl font-black">{member?.points || 0}</p>
                   </div>
                 </div>
               </div>
 
               {/* App Features */}
-              <div className="p-4 -mt-6 bg-white rounded-t-[30px] h-full">
+              <div className="p-4 bg-white h-full relative z-20 -mt-6 rounded-t-[30px]">
                 <div className="grid grid-cols-4 gap-2 mb-6">
                   {[
                     { icon: <CreditCard />, label: "Bayar", color: "bg-blue-50 text-blue-600" },
@@ -164,11 +165,11 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-40 scrollbar-hide">
                   {products.length > 0 ? products.map((p, i) => (
                     <div key={i} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
-                      <div className="aspect-square bg-white rounded-xl mb-2 flex items-center justify-center text-3xl">
+                      <div className="aspect-square bg-white rounded-xl mb-2 flex items-center justify-center text-3xl shadow-sm">
                         {p.name.includes('Minyak') ? '🍳' : (p.name.includes('Beras') ? '🌾' : '📦')}
                       </div>
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter mb-1">{p.partner.shopName}</p>
-                      <p className="text-xs font-bold text-slate-800 line-clamp-1">{p.name}</p>
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter mb-1 leading-none">{p.partner.shopName}</p>
+                      <p className="text-xs font-bold text-slate-800 line-clamp-1 mb-1">{p.name}</p>
                       <p className="text-emerald-700 font-black text-sm">Rp {p.price.toLocaleString()}</p>
                       {p.originalPrice && <p className="text-[10px] text-slate-400 line-through">Rp {p.originalPrice.toLocaleString()}</p>}
                     </div>
@@ -179,11 +180,11 @@ export default function Home() {
               </div>
 
               {/* App Navigation */}
-              <div className="absolute bottom-0 w-full h-16 bg-white border-t border-slate-100 flex items-center justify-around">
+              <div className="absolute bottom-0 w-full h-16 bg-white border-t border-slate-100 flex items-center justify-around z-30">
                 <ShoppingBag size={20} className="text-emerald-600" />
                 <MapPin size={20} className="text-slate-300" />
-                <div className="w-12 h-12 bg-emerald-600 rounded-full -mt-10 border-4 border-white flex items-center justify-center text-white shadow-lg">
-                  <CreditCard size={20} />
+                <div className="w-12 h-12 bg-slate-900 rounded-full -mt-10 border-4 border-white flex items-center justify-center text-white shadow-xl">
+                  <Logo size={14} className="bg-transparent shadow-none" />
                 </div>
                 <Tag size={20} className="text-slate-300" />
                 <Users size={20} className="text-slate-300" />
@@ -339,7 +340,7 @@ export default function Home() {
               <div key={idx} className={`relative flex items-center gap-8 ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
                 <div className="flex-1 hidden md:block"></div>
                 <div className="w-12 h-12 rounded-full bg-white border-4 border-white shadow-lg z-10 shrink-0"></div>
-                <div className="flex-1 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+                <div className="flex-1 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm transition-all hover:shadow-xl">
                   <span className={`text-[10px] font-black uppercase text-white px-3 py-1 rounded-full ${step.color} mb-3 inline-block`}>{step.phase}</span>
                   <h4 className="text-xl font-bold mb-2">{step.title}</h4>
                   <p className="text-sm text-slate-500">{step.desc}</p>
