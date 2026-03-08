@@ -15,6 +15,7 @@ import {
     ChevronRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 export default function Dashboard() {
     const stats = [
@@ -183,6 +184,33 @@ export default function Dashboard() {
                             </div>
                             {/* Background decor */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/20 blur-[80px] -mr-16 -mt-16 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    {/* Partner Management Quick View */}
+                    <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-slate-900">Status Mitra Warung</h3>
+                            <Link href="/mitra/register" className="text-xs font-bold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full hover:bg-emerald-100 transition-all">+ Tambah Mitra</Link>
+                        </div>
+                        <div className="space-y-4">
+                            {[
+                                { name: "Warung Barokah", status: "Active", volume: "Rp 4.2M", color: "bg-emerald-500" },
+                                { name: "Toko Sembako Makmur", status: "Active", volume: "Rp 2.8M", color: "bg-emerald-500" },
+                                { name: "Sembako Jaya", status: "Pending", volume: "-", color: "bg-amber-500" },
+                                { name: "Toko Kelontong Siti", status: "Suspended", volume: "Rp 1.1M", color: "bg-red-500" }
+                            ].map((m, i) => (
+                                <div key={i} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-2 h-2 rounded-full ${m.color}`}></div>
+                                        <span className="text-sm font-bold text-slate-800">{m.name}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black uppercase text-slate-400">{m.status}</p>
+                                        <p className="text-xs font-bold text-slate-900">{m.volume}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
