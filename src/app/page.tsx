@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   BarChart3,
@@ -35,15 +35,57 @@ import { Logo } from '@/components/Logo';
 export default function Home() {
   const { member, fetchMember } = useAppStore();
   const [products, setProducts] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState(5000);
+  const [transactionsUI, setTransactionsUI] = useState(5000);
   const [fee, setFee] = useState(1000);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<any>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<'home' | 'history'>('home');
+  const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
 
   useEffect(() => {
     fetchMember();
     fetch('/api/products').then(res => res.json()).then(setProducts);
+
+    // Fetch member transactions
+    fetch('/api/transactions').then(res => res.json()).then(data => {
+      // For demo, we assume the first member is ours
+      setMemberTransactions(data);
+    });
   }, []);
 
-  const potentialRevenue = useMemo(() => transactions * fee, [transactions, fee]);
+  const potentialRevenue = useMemo(() => transactionsUI * fee, [transactionsUI, fee]);
+
+  const handlePay = async () => {
+    if (!scanResult || !member) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: member.id,
+          partnerId: scanResult.partnerId,
+          totalAmount: scanResult.price,
+          pointsEarned: Math.floor(scanResult.price / 1000)
+        })
+      });
+      if (res.ok) {
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          setScanResult(null);
+          fetchMember();
+        }, 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const costBreakdown = [
     {
@@ -157,38 +199,258 @@ export default function Home() {
                   ))}
                 </div>
 
-                {/* Alfagift Style Product Feed */}
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-extrabold text-sm">Produk Mitra Real-time ⚡</h3>
-                  <button className="text-[10px] text-emerald-600 font-bold">Lihat Semua</button>
-                </div>
-                <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-40 scrollbar-hide">
-                  {products.length > 0 ? products.map((p, i) => (
-                    <div key={i} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
-                      <div className="aspect-square bg-white rounded-xl mb-2 flex items-center justify-center text-3xl shadow-sm">
-                        {p.name.includes('Minyak') ? '🍳' : (p.name.includes('Beras') ? '🌾' : '📦')}
-                      </div>
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter mb-1 leading-none">{p.partner.shopName}</p>
-                      <p className="text-xs font-bold text-slate-800 line-clamp-1 mb-1">{p.name}</p>
-                      <p className="text-emerald-700 font-black text-sm">Rp {p.price.toLocaleString()}</p>
-                      {p.originalPrice && <p className="text-[10px] text-slate-400 line-through">Rp {p.originalPrice.toLocaleString()}</p>}
-                    </div>
-                  )) : (
-                    [1, 2].map(i => <div key={i} className="aspect-video bg-slate-100 animate-pulse rounded-2xl"></div>)
-                  )}
+                {/* Alfagift Style Content Area */}
+                <div className="flex-1 overflow-y-auto px-4 pb-24 scrollbar-hide pt-4">
+                  <AnimatePresence mode="wait">
+                    {activeTab === 'home' ? (
+                      <motion.div
+                        key="home"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        className="space-y-6"
+                      >
+                        {/* Promo Banner */}
+                        <div className="relative h-32 w-full rounded-[28px] overflow-hidden bg-slate-900 group shadow-xl">
+                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-slate-900 opacity-90 transition-all group-hover:scale-110 duration-700"></div>
+                          <div className="relative z-10 p-5 h-full flex flex-col justify-center">
+                            <p className="text-[10px] font-black tracking-[0.2em] text-emerald-400 uppercase mb-1">PROMO HARI INI</p>
+                            <h4 className="text-white font-black text-sm uppercase leading-tight mb-2">Diskon 10% Belanja<br /> di Warung Pak Eko!</h4>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[8px] bg-white/20 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest leading-none">Berakhir: 2 Jm Lagi</span>
+                            </div>
+                          </div>
+                          <div className="absolute bottom-[-10px] right-[-10px] opacity-10 rotate-12">
+                            <Logo size={80} className="bg-transparent" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-extrabold text-xs uppercase tracking-tight text-slate-400">Paling Laris 🔥</h3>
+                            <button className="text-[9px] text-emerald-600 font-black uppercase tracking-widest">Detail</button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {products.length > 0 ? products.map((p, i) => (
+                              <div key={i} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col group hover:shadow-lg hover:bg-white transition-all">
+                                <div className="aspect-square bg-white rounded-xl mb-2 flex items-center justify-center text-3xl shadow-sm group-hover:scale-105 transition-transform relative overflow-hidden">
+                                  {p.name.includes('Minyak') ? '🍳' : (p.name.includes('Beras') ? '🌾' : (p.name.includes('Gula') ? '🍬' : '📦'))}
+                                  {i === 0 && <div className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-bl-xl uppercase">Hot</div>}
+                                </div>
+                                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-tighter mb-1 leading-none">{p.partner.shopName}</p>
+                                <p className="text-xs font-bold text-slate-800 line-clamp-1 mb-1 leading-tight">{p.name}</p>
+                                <div className="mt-auto">
+                                  <p className="text-emerald-700 font-black text-sm">Rp {p.price.toLocaleString()}</p>
+                                  {p.originalPrice && <p className="text-[9px] text-slate-400 line-through">Rp {p.originalPrice.toLocaleString()}</p>}
+                                </div>
+                              </div>
+                            )) : (
+                              [1, 2, 3, 4].map(i => <div key={i} className="aspect-[3/4] bg-slate-100 animate-pulse rounded-2xl"></div>)
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="history"
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        className="space-y-4"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-extrabold text-xs uppercase tracking-tight text-slate-400">E-Statement 🧾</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {memberTransactions.length > 0 ? memberTransactions.map((tx, i) => (
+                            <div key={i} className="bg-white border border-slate-100 p-4 rounded-3xl flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                              <div className="w-11 h-11 bg-slate-900 rounded-2xl flex items-center justify-center text-white p-2 shadow-lg group-hover:rotate-6 transition-transform">
+                                <Logo size={12} className="bg-transparent shadow-none" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-[11px] font-black text-slate-900 leading-none mb-1">{tx.partner.shopName}</p>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(tx.createdAt))}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs font-black text-slate-900 leading-none mb-1">Rp {tx.totalAmount.toLocaleString()}</p>
+                                <span className="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black uppercase tracking-widest border border-emerald-100">Berhasil</span>
+                              </div>
+                            </div>
+                          )) : (
+                            <div className="py-20 text-center grayscale opacity-40">
+                              <Logo size={40} className="mx-auto mb-4 bg-transparent" />
+                              <p className="text-[10px] text-slate-900 font-black uppercase tracking-widest">Belum ada transaksi</p>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
               {/* App Navigation */}
               <div className="absolute bottom-0 w-full h-16 bg-white border-t border-slate-100 flex items-center justify-around z-30">
-                <ShoppingBag size={20} className="text-emerald-600" />
-                <MapPin size={20} className="text-slate-300" />
-                <div className="w-12 h-12 bg-slate-900 rounded-full -mt-10 border-4 border-white flex items-center justify-center text-white shadow-xl">
-                  <Logo size={14} className="bg-transparent shadow-none" />
+                <button
+                  onClick={() => {
+                    setScanResult(null);
+                    setActiveTab('home');
+                  }}
+                  className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'home' && !scanResult ? 'text-emerald-600 scale-110' : 'text-slate-300'}`}
+                >
+                  <ShoppingBag size={18} />
+                  <span className="text-[8px] font-black uppercase tracking-tighter">Katalog</span>
+                </button>
+                <div className="text-slate-300 flex flex-col items-center gap-1">
+                  <MapPin size={18} />
+                  <span className="text-[8px] font-black uppercase tracking-tighter">Lokasi</span>
                 </div>
-                <Tag size={20} className="text-slate-300" />
-                <Users size={20} className="text-slate-300" />
+                <button
+                  onClick={() => {
+                    setIsScanning(true);
+                  }}
+                  className="w-12 h-12 bg-slate-900 rounded-full -mt-10 border-4 border-white flex items-center justify-center text-white shadow-xl hover:scale-110 active:scale-95 transition-all"
+                >
+                  <Logo size={14} className="bg-transparent shadow-none" />
+                </button>
+                <button
+                  onClick={() => {
+                    setScanResult(null);
+                    setActiveTab('history');
+                  }}
+                  className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'history' ? 'text-emerald-600 scale-110' : 'text-slate-300'}`}
+                >
+                  <CreditCard size={18} />
+                  <span className="text-[8px] font-black uppercase tracking-tighter">Riwayat</span>
+                </button>
+                <div className="text-slate-300 flex flex-col items-center gap-1">
+                  <Users size={18} />
+                  <span className="text-[8px] font-black uppercase tracking-tighter">Akun</span>
+                </div>
               </div>
+
+              {/* QR Scanner Simulation Overlay */}
+              <AnimatePresence>
+                {isScanning && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center p-8 text-center"
+                  >
+                    <div className="w-full aspect-square border-2 border-emerald-500 rounded-3xl relative overflow-hidden mb-8 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                      <motion.div
+                        animate={{ top: ['0%', '100%', '0%'] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                        className="absolute left-0 w-full h-1 bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)] z-10"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                        <Logo size={80} className="bg-transparent" />
+                      </div>
+                    </div>
+                    <h3 className="text-white font-black text-lg mb-2">Scan QR Warung</h3>
+                    <p className="text-slate-400 text-xs mb-8 uppercase tracking-widest font-bold">Arahkan kamera ke QR mitra</p>
+
+                    <div className="grid grid-cols-1 gap-3 w-full">
+                      <p className="text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-widest">Demo: Pilih Produk</p>
+                      {products.slice(0, 3).map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => {
+                            setScanResult(p);
+                            setIsScanning(false);
+                          }}
+                          className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white hover:bg-white/10 transition-all uppercase tracking-widest"
+                        >
+                          {p.partner.shopName} - {p.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => setIsScanning(false)}
+                      className="mt-8 text-white/40 text-xs font-bold uppercase tracking-widest"
+                    >
+                      Batal
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* Confirm Payment Modal */}
+                {scanResult && !showSuccess && (
+                  <motion.div
+                    initial={{ y: '100%' }}
+                    animate={{ y: '0%' }}
+                    exit={{ y: '100%' }}
+                    className="absolute inset-x-0 bottom-0 bg-white z-[110] rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.1)] p-8 border-t border-slate-100"
+                  >
+                    <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-8" />
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+                        <Store size={24} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{scanResult.partner.shopName}</p>
+                        <h4 className="text-lg font-black text-slate-900 leading-none">{scanResult.name}</h4>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-3xl p-6 mb-8">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-xs font-bold text-slate-400">Harga Produk</span>
+                        <span className="text-xs font-black text-slate-900">Rp {scanResult.price.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between mb-4 pb-4 border-b border-slate-200">
+                        <span className="text-xs font-bold text-slate-400">Admin Koperasi</span>
+                        <span className="text-xs font-black text-emerald-600">Rp 1,000</span>
+                      </div>
+                      <div className="flex justify-between items-center text-slate-900">
+                        <span className="text-sm font-black uppercase tracking-widest">Total Bayar</span>
+                        <span className="text-2xl font-black italic">Rp {(scanResult.price + 1000).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setScanResult(null)}
+                        className="flex-1 py-5 bg-slate-50 text-slate-400 font-black rounded-2xl uppercase tracking-widest text-[10px]"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        onClick={handlePay}
+                        disabled={isLoading}
+                        className="flex-[2] py-5 bg-slate-900 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-xl"
+                      >
+                        {isLoading ? 'Memproses...' : 'Konfirmasi Bayar'}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Success Animation */}
+                {showSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="absolute inset-0 bg-emerald-600 z-[120] flex flex-col items-center justify-center text-center p-8 text-white"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', damping: 10, stiffness: 100, delay: 0.2 }}
+                      className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mb-8 shadow-2xl"
+                    >
+                      <CheckCircle2 size={48} className="text-white" />
+                    </motion.div>
+                    <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter">Pembayaran Berhasil!</h2>
+                    <p className="text-emerald-100 font-bold uppercase tracking-widest text-[10px] mb-8">Terima kasih telah memberdayakan warung lokal.</p>
+                    <div className="py-3 px-6 bg-white/10 rounded-full font-black text-xs uppercase tracking-widest">
+                      +{Math.floor(scanResult.price / 1000)} Poin Koperasi
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Decorative Blobs */}
@@ -249,12 +511,12 @@ export default function Home() {
                       min="1000"
                       max="50000"
                       step="1000"
-                      value={transactions}
-                      onChange={(e) => setTransactions(parseInt(e.target.value))}
+                      value={transactionsUI}
+                      onChange={(e) => setTransactionsUI(parseInt(e.target.value))}
                       className="w-full h-3 bg-emerald-700 rounded-lg appearance-none cursor-pointer accent-white"
                     />
                     <div className="flex justify-between mt-4">
-                      <span className="text-3xl font-black">{transactions.toLocaleString()} <span className="text-sm font-medium opacity-60">tx / bln</span></span>
+                      <span className="text-3xl font-black">{transactionsUI.toLocaleString()} <span className="text-sm font-medium opacity-60">tx / bln</span></span>
                     </div>
                   </div>
 
@@ -277,7 +539,7 @@ export default function Home() {
                 <p className="text-sm font-bold opacity-80 mb-2">Estimasi Kas Koperasi Meningkat:</p>
                 <p className="text-5xl font-black">Rp {potentialRevenue.toLocaleString()}</p>
                 <p className="mt-4 text-xs font-bold leading-relaxed opacity-60 italic">
-                  *Dengan target {transactions.toLocaleString()} transaksi per bulan, pengerjaan aplikasi senilai Rp 60jt dapat balik modal (BEP) dalam waktu {(60000000 / potentialRevenue).toFixed(1)} bulan.
+                  *Dengan target {transactionsUI.toLocaleString()} transaksi per bulan, pengerjaan aplikasi senilai Rp 60jt dapat balik modal (BEP) dalam waktu {(60000000 / potentialRevenue).toFixed(1)} bulan.
                 </p>
               </div>
 
