@@ -166,8 +166,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="https://github.com/errorcript/koperasi-digital/releases"
-                target="_blank"
+                href="https://github.com/errorcript/koperasi-digital/releases/download/v-beta/app-debug.apk"
                 className="px-8 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-emerald-600 transition-all shadow-xl flex items-center justify-center gap-2 group"
               >
                 <Download size={20} className="group-hover:bounce" /> Unduh APK (Beta)
@@ -726,8 +725,7 @@ export default function Home() {
                     <p className="text-xs text-slate-500 leading-relaxed italic mb-8">Download manual file Android APK yang diproduksi otomatis oleh GitHub Actions.</p>
                   </div>
                   <a
-                    href="https://github.com/errorcript/koperasi-digital/releases"
-                    target="_blank"
+                    href="https://github.com/errorcript/koperasi-digital/releases/download/v-beta/app-debug.apk"
                     className="w-full py-4 bg-emerald-600 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] items-center gap-2 flex justify-center"
                   >
                     <Logo size={12} className="bg-transparent shadow-none" /> Unduh APK Sekarang
